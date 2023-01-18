@@ -110,7 +110,7 @@ def evaluate_ascii_strings(children, bare_eval_data):
     return fitnesses
 
 
-def step(selection_function, crossover_function, mutation_function, population, fitnesses, fitness_history, eval_data):
+def step(selection_function, crossover_function, mutation_function, population, fitnesses, fitness_history, eval_data, iteration_percentage):
     """
     Creates a new generation from the previous generation, using the operators
     provided during object creation. Also tracks the best fitness in every
@@ -119,7 +119,7 @@ def step(selection_function, crossover_function, mutation_function, population, 
     selection = selection_function(population, fitnesses)
     children = selection if crossover_function is None else crossover_function(
         selection)
-    children = [mutation_function(e) for e in children]
+    children = [mutation_function(e, iteration_percentage) for e in children]
     children_fitnesses = evaluate_ascii_strings(children, eval_data)
     combined_population = np.append(np.array(population), np.array(children))
     combined_fitnesses = np.append(
@@ -173,21 +173,32 @@ def cut_point_crossover(population):
     return new_population
 
 
-def mutate(individual):
+# def mutate(individual):
+
+#     size = len(individual)
+
+#     mutated_part_size = np.random.randint(
+#         size / 20, size / 5) if np.random.random() < 0.1 else int(size / 100)
+#     mutated_part_start_index = np.random.randint(0, size - mutated_part_size)
+#     mutated_individual = individual[:mutated_part_start_index] + generate_random_string(
+#         mutated_part_size) + individual[mutated_part_start_index + mutated_part_size:]
+
+#     return mutated_individual
+
+def mutate(individual, iteration_percentage):
 
     size = len(individual)
 
     mutated_part_size = np.random.randint(
-        size / 20, size / 5) if np.random.random() < 0.1 else int(size / 100)
+        size / 20, size / 5) if np.random.random() < 0.1 else int(size / 100 * (1.01 - iteration_percentage))
     mutated_part_start_index = np.random.randint(0, size - mutated_part_size)
     mutated_individual = individual[:mutated_part_start_index] + generate_random_string(
         mutated_part_size) + individual[mutated_part_start_index + mutated_part_size:]
 
     return mutated_individual
 
+
 # there's a pil bug to convert images from bool array, this makes it grayscale first. Only needed to display, not compare.
-
-
 def img_frombytes(data):
     size = data.shape[::-1]
     databytes = np.packbits(data, axis=1)
@@ -195,7 +206,7 @@ def img_frombytes(data):
 
 
 if __name__ == "__main__":
-    filename = 'delta.jpg'
+    filename = 'smile.png'
     target_image = get_target_image(filename)
     ascii_length = resolution_to_string_length(*(target_image.shape))
     font, line_height, symbols_per_row = get_font_and_related_dimensions(
@@ -204,7 +215,7 @@ if __name__ == "__main__":
     # Parameters for the experiment
     MAX_NO_OF_ITERATIONS = 2000
     PRINT_EVERY_N_ITERATIONS = 50
-    POPULATION_SIZE = 1000
+    POPULATION_SIZE = 2000
 
     eval_data = EvalData(target_image, font, line_height, symbols_per_row)
     population = create_random_population(POPULATION_SIZE, ascii_length)
@@ -221,7 +232,7 @@ if __name__ == "__main__":
     # Running the EA
     for gen_no in range(MAX_NO_OF_ITERATIONS):
         population, fitnesses, fitness_history = step(
-            select, cut_point_crossover, mutate, population, fitnesses, fitness_history, eval_data)
+            select, cut_point_crossover, mutate, population, fitnesses, fitness_history, eval_data, gen_no / MAX_NO_OF_ITERATIONS)
 
         if gen_no % PRINT_EVERY_N_ITERATIONS == 0:
             print(
