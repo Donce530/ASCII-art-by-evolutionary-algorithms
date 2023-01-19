@@ -36,7 +36,6 @@ def get_font_and_related_dimensions(font_file_path, example_string, image_width)
 
 PRINTABLE_CHARS = string.ascii_letters + \
     string.punctuation + '                       '
-# PRINTABLE_CHARS = string.ascii_letters + string.punctuation
 #PRINTABLE_CHARS = ' @'
 
 
@@ -113,7 +112,11 @@ def evaluate_ascii_strings(children, bare_eval_data):
 
 
 def step(selection_function, crossover_function, mutation_function, population, fitnesses, fitness_history, eval_data, iteration_percentage):
-
+    """
+    Creates a new generation from the previous generation, using the operators
+    provided during object creation. Also tracks the best fitness in every
+    generation. Returns children and fitnesses.
+    """
     selection = selection_function(population, fitnesses)
     children = selection if crossover_function is None else crossover_function(
         selection)
@@ -171,7 +174,7 @@ def cut_point_crossover(population):
     return new_population
 
 
-# def mutate(individual, iteration_percentage=0):
+# def mutate(individual):
 
 #     size = len(individual)
 
@@ -201,7 +204,7 @@ def mutate(individual, iteration_percentage):
 #     mutated_individual = []
 #     for character in individual:
 #         mutated_individual.append(
-#             character if np.random.random() < 0.05 else generate_random_string(1))
+#             character if np.random.random() < 0.2 else generate_random_string(1))
 
 #     return ''.join(mutated_individual)
 
@@ -214,64 +217,90 @@ def img_frombytes(data):
 
 
 if __name__ == "__main__":
-    filename = 'hall.jpg'
+    filename = 'smile.png'
     target_image = get_target_image(filename)
     ascii_length = resolution_to_string_length(*(target_image.shape))
     font, line_height, symbols_per_row = get_font_and_related_dimensions(
         'Courier Prime.ttf', generate_random_string(ascii_length), target_image.shape[1])
 
     # Parameters for the experiment
-    MAX_NO_OF_ITERATIONS = 25000
-    PRINT_EVERY_N_ITERATIONS = 100
-    POPULATION_SIZE = 1000
-    COMMENT = 'long'
+    # MAX_NO_OF_ITERATIONS = 2
+    # PRINT_EVERY_N_ITERATIONS = 100
+    # POPULATION_SIZE = 10
 
-    worst_case_example = text_to_image(generate_random_string(
-        ascii_length), target_image.shape[1], target_image.shape[0], font, line_height, symbols_per_row)
-    WORST_CASE_EVALUATION = mean_squared_error(
-        worst_case_example, target_image)
+    WORST_CASE_EVALUATION = mean_squared_error(text_to_image(generate_random_string(
+        ascii_length), target_image.shape[0], target_image.shape[1], font, line_height, symbols_per_row), target_image)
 
     eval_data = EvalData(target_image, font, line_height,
                          symbols_per_row, WORST_CASE_EVALUATION)
-    population = create_random_population(POPULATION_SIZE, ascii_length)
-    fitnesses = evaluate_ascii_strings(population, eval_data)
+
+    population_sizes = np.arange(100, 2100, 100, dtype=int)
+    print(population_sizes)
+    TOTAL_EVALUATIONS = 1000_000
+    fitness_scores = np.empty(len(population_sizes))
+    iterations = [int(np.ceil(TOTAL_EVALUATIONS / pop))
+                  for pop in population_sizes]
+
     fitness_history = []
 
-    DIR_NAME = f'./{filename}_{POPULATION_SIZE}_{MAX_NO_OF_ITERATIONS}_{COMMENT}'
-    if not os.path.exists(DIR_NAME):
-        os.makedirs(DIR_NAME)
-    else:
-        raise Exception(
-            f"Directory {DIR_NAME} exists, rename it to avoid data loss")
+    for i, (pop, it) in enumerate(zip(population_sizes, iterations)):
+        start_population = create_random_population(pop, ascii_length)
+        start_fitnesses = evaluate_ascii_strings(start_population, eval_data)
+        print(pop, it, pop * it)
+        population = copy.copy(start_population)
+        fitnesses = copy.copy(start_fitnesses)
+        for gen_no in range(it):
+            population, fitnesses, _ = step(
+                select, cut_point_crossover, mutate, population, fitnesses, fitness_history, eval_data, gen_no / it)
+        best_solution_index = np.argmin(fitnesses)
+        best_fitness = fitnesses[best_solution_index]
+        fitness_scores[i] = best_fitness
+        print(best_fitness)
+        np.save(f'fitness_scores_{i}', fitness_scores)
+
+    print(fitness_scores)
+    np.save('fitness_scores', fitness_scores)
+
+    # population = create_random_population(POPULATION_SIZE, ascii_length)
+    # fitnesses = evaluate_ascii_strings(population, eval_data)
+    # fitness_history = []
+
+    # DIR_NAME = f'./{filename}_{POPULATION_SIZE}_{MAX_NO_OF_ITERATIONS}'
+    # if not os.path.exists(DIR_NAME):
+    #     os.makedirs(DIR_NAME)
+    # else:
+    #     raise Exception(
+    #         f"Directory {DIR_NAME} exists, rename it to avoid data loss")
 
     # Running the EA
-    for gen_no in range(MAX_NO_OF_ITERATIONS):
-        population, fitnesses, fitness_history = step(
-            select, cut_point_crossover, mutate, population, fitnesses, fitness_history, eval_data, gen_no / MAX_NO_OF_ITERATIONS)
+    # for gen_no in range(MAX_NO_OF_ITERATIONS):
+    #     population, fitnesses, fitness_history = step(
+    #         select, cut_point_crossover, mutate, population, fitnesses, fitness_history, eval_data, gen_no / MAX_NO_OF_ITERATIONS)
 
-        if gen_no % PRINT_EVERY_N_ITERATIONS == 0:
-            print(
-                f"At generation {gen_no}. Best current fitness: {np.min(fitnesses)}")
-            best_solution_index = np.argmin(fitnesses)
-            best_solution = population[best_solution_index]
-            solution_image = text_to_image(
-                best_solution, target_image.shape[1], target_image.shape[0], font, line_height, symbols_per_row)
-            ascii = img_frombytes(solution_image)
-            ascii.save(f"{DIR_NAME}/result_after_{gen_no}_iterations.jpeg")
+    # if gen_no % PRINT_EVERY_N_ITERATIONS == 0:
+    #     print(
+    #         f"At generation {gen_no}. Best current fitness: {np.min(fitnesses)}")
+    #     best_solution_index = np.argmin(fitnesses)
+    #     best_solution = population[best_solution_index]
+    #     solution_image = text_to_image(
+    #         best_solution, target_image.shape[1], target_image.shape[0], font, line_height, symbols_per_row)
+    #     ascii = img_frombytes(solution_image)
+    # ascii.save(f"{DIR_NAME}/result_after_{gen_no}_iterations.jpeg")
 
-    # Printing and plotting results
-    best_solution_index = np.argmin(fitnesses)
-    best_solution = population[best_solution_index]
-    best_fitness = fitnesses[best_solution_index]
-    print(f"Best solution from EA: {best_fitness} MSE")
+    # print(fitness_history)
+    # # # Printing and plotting results
+    # # best_solution_index = np.argmin(fitnesses)
+    # # best_solution = population[best_solution_index]
+    # # best_fitness = fitnesses[best_solution_index]
+    # # print(f"Best solution from EA: {best_fitness} MSE")
 
-    ascii = img_frombytes(text_to_image(
-        best_solution, target_image.shape[1], target_image.shape[0], font, line_height, symbols_per_row))
-    ascii.save(f"{DIR_NAME}/result.jpeg")
-    np.save(f"{DIR_NAME}/fitness_history", np.array(fitness_history))
+    # # ascii = img_frombytes(text_to_image(
+    # #     best_solution, target_image.shape[1], target_image.shape[0], font, line_height, symbols_per_row))
+    # # ascii.save(f"{DIR_NAME}/result.jpeg")
+    # np.save(f"fitness_history", np.array(fitness_history))
 
-    with open(f"{DIR_NAME}/result.txt", "w") as text_file:
-        lines = [best_solution[i:i+symbols_per_row]
-                 for i in range(0, len(best_solution), symbols_per_row)]
-        for line in lines:
-            text_file.write(f"{line}\n")
+    # with open(f"{DIR_NAME}/result.txt", "w") as text_file:
+    #     lines = [best_solution[i:i+symbols_per_row]
+    #              for i in range(0, len(best_solution), symbols_per_row)]
+    #     for line in lines:
+    #         text_file.write(f"{line}\n")
