@@ -2,14 +2,16 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 import os
-import time
 import numpy as np
 import string
 import random
 import copy
-import math
 from joblib import Parallel, delayed, cpu_count
 from sklearn.metrics import mean_squared_error
+
+
+PRINTABLE_CHARS = string.ascii_letters + \
+    string.punctuation + '                       '
 
 
 def get_target_image(filename):
@@ -32,12 +34,6 @@ def get_font_and_related_dimensions(font_file_path, example_string, image_width)
         image_width / (font.getsize(example_string)[0] / len(example_string)))
 
     return font, line_height, symbols_per_row
-
-
-PRINTABLE_CHARS = string.ascii_letters + \
-    string.punctuation + '                       '
-# PRINTABLE_CHARS = string.ascii_letters + string.punctuation
-#PRINTABLE_CHARS = ' @'
 
 
 def generate_random_string(length):
@@ -166,7 +162,7 @@ def cut_point_crossover(population):
         # if np.random.random() < 0.5:
         new_population += crossover(parent_a, parent_b, individual_length)
         # else:
-        #new_population += [parent_a, parent_b]
+        # new_population += [parent_a, parent_b]
 
     return new_population
 

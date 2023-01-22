@@ -1,22 +1,20 @@
-from PIL import Image, ImageOps
-from PIL import ImageDraw
-from PIL import ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 import os
-import time
 import numpy as np
 import string
 import random
 import copy
-import math
 from joblib import Parallel, delayed, cpu_count
 from sklearn.metrics import mean_squared_error
+
+PRINTABLE_CHARS = string.ascii_letters + \
+    string.punctuation + '                       '
 
 
 def get_target_image(filename):
     real_image = ImageOps.grayscale(Image.open(filename))
     b_w_image = np.array(real_image)
     return b_w_image
-
 
 
 def resolution_to_string_length(height, width):
@@ -30,11 +28,6 @@ def get_font_and_related_dimensions(font_file_path, example_string, image_width)
         image_width / (font.getsize(example_string)[0] / len(example_string)))
 
     return font, line_height, symbols_per_row
-
-
-PRINTABLE_CHARS = string.ascii_letters + \
-    string.punctuation + '                       '
-#PRINTABLE_CHARS = ' @'
 
 
 def generate_random_string(length):
@@ -56,21 +49,7 @@ class EvalData():
         self.to_eval = None
 
 
-# def text_to_image(text, width, height, font, line_height, symbols_per_row, ImageFont=ImageFont, ImageDraw=ImageDraw, Image=Image, np=np, int=int):
-#     lines = [text[i:i+symbols_per_row]
-#              for i in range(0, len(text), symbols_per_row)]
-
-#     img = Image.new("1", (width, height), "#FFF")
-#     draw = ImageDraw.Draw(img)
-
-#     y = 0
-#     for line in lines:
-#         draw.text((0, y), line, "#000", font=font)
-#         y += line_height
-
-#     return np.array(img, dtype=int)
-
-def text_to_image(text, width, height, font, line_height, symbols_per_row, ImageFont=ImageFont, ImageDraw=ImageDraw, Image=Image, np=np, int=int):
+def text_to_image(text, width, height, font, line_height, symbols_per_row):
     lines = [text[i:i+symbols_per_row]
              for i in range(0, len(text), symbols_per_row)]
 
@@ -166,22 +145,10 @@ def cut_point_crossover(population):
         # if np.random.random() < 0.5:
         new_population += crossover(parent_a, parent_b, individual_length)
         # else:
-        #new_population += [parent_a, parent_b]
+        # new_population += [parent_a, parent_b]
 
     return new_population
 
-
-# def mutate(individual):
-
-#     size = len(individual)
-
-#     mutated_part_size = np.random.randint(
-#         size / 20, size / 5) if np.random.random() < 0.1 else int(size / 100)
-#     mutated_part_start_index = np.random.randint(0, size - mutated_part_size)
-#     mutated_individual = individual[:mutated_part_start_index] + generate_random_string(
-#         mutated_part_size) + individual[mutated_part_start_index + mutated_part_size:]
-
-#     return mutated_individual
 
 def mutate(individual, iteration_percentage):
 
