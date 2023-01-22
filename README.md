@@ -24,6 +24,14 @@ Inspired by recent advances in using EAs for digital art
 generation, we decided to evaluate the potential of EAs
 in ASCII art creation.
 
+### Results
+
+On the left you can see the source image, and on the right - ASCII result of our algorithm. More results and some gif visualsations can be found under the **./results** directory
+
+![Result](results/hall_1000_25000/result.jpeg)
+![Result](results/smile_2000_2000_(denoising_no_spaces)/result.jpeg)
+![Result](results/UT_2000_3000_spaces/result.jpeg)
+
 ### Project structure
 
 **utils** folder contains different helping files such as font file used, script to create GIF and scripts to run code on HPC
@@ -31,3 +39,4 @@ in ASCII art creation.
 **source_imgs** folder contains source images used
 
 **results** folder contains all resulting ASCII art images
+
