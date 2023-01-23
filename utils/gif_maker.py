@@ -26,9 +26,6 @@ def make_gif(folder_path, gif_name):
         [1.0 for f in files_without_numbers]
     imageio.mimsave(gif_name, images, duration=durations)
 
-# usage
-
-
 folder_path = './'
 subfolders = [f.path for f in os.scandir(folder_path) if f.is_dir()]
 for subfolder in subfolders:
