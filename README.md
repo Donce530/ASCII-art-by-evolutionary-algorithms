@@ -26,7 +26,7 @@ in ASCII art creation.
 
 ### Results
 
-On the left you can see the source image, and on the right - ASCII result of our algorithm. More results and some gif visualsations can be found under the **./results** directory
+Below are the ASCII results of our algorithm. More results and some gif visualsations can be found under the **./results** directory
 
 ![Result](results/hall_1000_25000/result.jpeg)
 ![Result](results/smile_2000_2000_(denoising_no_spaces)/result.jpeg)
