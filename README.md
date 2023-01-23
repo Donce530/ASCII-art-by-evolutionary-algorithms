@@ -31,6 +31,8 @@ On the left you can see the source image, and on the right - ASCII result of our
 ![Result](results/hall_1000_25000/result.jpeg)
 ![Result](results/smile_2000_2000_(denoising_no_spaces)/result.jpeg)
 ![Result](results/UT_2000_3000_spaces/result.jpeg)
+![Result](results/UT_building_1000_25000_/result.jpeg)
+![Result](results/Tallinn_1000_25000_/result.jpeg)
 
 ### Project structure
 
